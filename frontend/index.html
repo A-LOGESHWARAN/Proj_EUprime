@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D In-Vitro Lead Dashboard</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b1220;
+      --card: #111827;
+      --border: #1f2937;
+      --accent: #2563eb;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --success: #16a34a;
+      --warning: #eab308;
+      --danger: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 26px;
+      font-weight: 600;
+    }
+
+    .subheading {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .control-label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    input {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      min-width: 180px;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    button.primary {
+      margin-top: 16px;
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button.primary:hover {
+      opacity: 0.9;
+    }
+
+    /* KPI + Chart Row */
+    .top-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 600;
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .kpi-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    .kpi-chip {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Chart */
+    #chartContainer {
+      background: #020617;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      height: 220px; /* 🔒 LOCK HEIGHT */
+    }
+
+    #chartHeader {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    #scoreChart {
+      width: 100% !important;
+      height: 180px !important;
+      max-height: 180px;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: #020617;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 500;
+      position: sticky;
+      top: 0;
+      background: #020617;
+    }
+
+    tbody tr:hover {
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    /* Badges */
+    .score-badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+    }
+
+    .score-high { background: var(--success); }
+    .score-mid  { background: var(--warning); }
+    .score-low  { background: var(--danger); }
+
+    .footer {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    @media (max-width: 900px) {
+      .top-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+  <h1>Lead Generation Dashboard</h1>
+  <p class="subheading">
+    Ranked biotech & toxicology leads using weighted propensity scoring.
+  </p>
+
+  <div class="card">
+    <!-- Controls -->
+    <div class="controls">
+      <div class="control-group">
+        <span class="control-label">Search</span>
+        <input id="searchInput" type="text" placeholder="Name, title, company..." />
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Minimum score</span>
+        <input id="minScoreInput" type="number" min="0" max="100" value="0" />
+      </div>
+
+      <button class="primary" onclick="loadLeads()">Run Query</button>
+
+      <a
+  href="http://localhost:5000/api/leads/csv"
+  class="primary"
+  style="text-decoration:none;"
+>
+⬇ Download CSV
+</a>
+    </div>
+
+    <!-- KPI + Chart -->
+    <div class="top-row">
+      <div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+        <div class="kpi-label">Qualified leads</div>
+
+        <div class="kpi-row">
+          <div class="kpi-chip">High ≥ 80: <span id="kpiHigh">0</span></div>
+          <div class="kpi-chip">Mid 50–79: <span id="kpiMid">0</span></div>
+          <div class="kpi-chip">Low &lt; 50: <span id="kpiLow">0</span></div>
+        </div>
+      </div>
+
+      <div id="chartContainer">
+        <div id="chartHeader">
+          <span>Top 5 Leads</span>
+          <span id="chartSubtitle">0 in view</span>
+        </div>
+        <canvas id="scoreChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div style="max-height:360px; overflow:auto;">
+      <table id="leadsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Score</th>
+            <th>Name</th>
+            <th>Title</th>
+            <th>Company</th>
+            <th>Location</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      Data source: <code>/api/leads</code>
+    </div>
+  </div>
+</div>
+
+<script>
+  let scoreChart = null;
+
+  function scoreClass(score) {
+    if (score >= 80) return "score-high";
+    if (score >= 50) return "score-mid";
+    return "score-low";
+  }
+
+  function downloadCSV() {
+  if (!currentLeads.length) {
+    alert("No leads to download");
+    return;
+  }
+
+  const headers = [
+    "Rank",
+    "Score",
+    "Name",
+    "Title",
+    "Company",
+    "Person Location",
+    "Company HQ",
+    "Email"
+  ];
+
+  const rows = currentLeads.map(l => [
+    l.rank,
+    l.probability_score,
+    l.name,
+    l.title,
+    l.company,
+    l.person_location,
+    l.hq_location,
+    l.email
+  ]);
+
+  let csv = headers.join(",") + "\n";
+  csv += rows.map(r => r.map(v => `"${v ?? ""}"`).join(",")).join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "ranked_leads.csv";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+  async function loadLeads() {
+    const q = searchInput.value.trim();
+    const minScore = minScoreInput.value || 0;
+
+    const params = new URLSearchParams({ min_score: minScore });
+    if (q) params.append("q", q);
+
+    const res = await fetch("http://localhost:5000/api/leads?" + params);
+    const data = await res.json();
+    const leads = data.leads || [];
+
+    renderTable(leads);
+    updateKpis(leads);
+    renderChart(leads);
+  }
+
+  function renderTable(leads) {
+    const tbody = document.querySelector("#leadsTable tbody");
+    tbody.innerHTML = "";
+
+    leads.forEach(l => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${l.rank}</td>
+        <td><span class="score-badge ${scoreClass(l.probability_score)}">${l.probability_score}</span></td>
+        <td>${l.name}</td>
+        <td>${l.title}</td>
+        <td>${l.company}</td>
+        <td>${l.person_location}</td>
+        <td style="font-size:11px; color:#9ca3af;">${l.email}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateKpis(leads) {
+    let high = 0, mid = 0, low = 0;
+    leads.forEach(l => {
+      if (l.probability_score >= 80) high++;
+      else if (l.probability_score >= 50) mid++;
+      else low++;
+    });
+
+    kpiTotal.textContent = leads.length;
+    kpiHigh.textContent = high;
+    kpiMid.textContent = mid;
+    kpiLow.textContent = low;
+    chartSubtitle.textContent = leads.length + " in view";
+  }
+
+  function renderChart(leads) {
+    const ctx = document.getElementById("scoreChart").getContext("2d");
+    const top = leads.slice(0, 5);
+
+    const labels = top.map(l => l.name);
+    const scores = top.map(l => l.probability_score);
+
+    if (!scoreChart) {
+      scoreChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            data: scores,
+            backgroundColor: "rgba(37,99,235,0.7)"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            y: {
+              min: 0,
+              max: 100,
+              ticks: { stepSize: 20, color: "#9ca3af" }
+            },
+            x: {
+              ticks: { color: "#9ca3af" }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    } else {
+      scoreChart.data.labels = labels;
+      scoreChart.data.datasets[0].data = scores;
+      scoreChart.update("none");
+    }
+  }
+
+  loadLeads();
+</script>
+</body>
+</html>
