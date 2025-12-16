@@ -94,10 +94,11 @@ project-root/
 ## 🖼️ Output Screenshots
 
 ### Dashboard Overview
-![Dashboard Overview](images/dashboard.png)
+
+![Dashboard Overview](image.png)
 
 ### Filtered & Ranked Leads
-![Filtered & Ranked Leads](images/filtered_leads.png)
+![Filtered & Ranked Leads](image-1.png)
 
 ### CSV Export
-![CSV Export](images/csv_export.png)
+![CSV Export](image-2.png)
