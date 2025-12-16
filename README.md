@@ -76,7 +76,7 @@ Higher scores indicate **higher likelihood of collaboration**.
 
 ## 📁 Project Structure
 
-text
+```text
 project-root/
 │
 ├── backend/
@@ -86,6 +86,7 @@ project-root/
 │   └── index.html          # Dashboard UI
 │
 └── README.md
+```
 
 
 
