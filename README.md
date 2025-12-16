@@ -76,7 +76,7 @@ Higher scores indicate **higher likelihood of collaboration**.
 
 ## 📁 Project Structure
 
-```text
+text
 project-root/
 │
 ├── backend/
@@ -87,13 +87,17 @@ project-root/
 │
 └── README.md
 
+
+
+
+
 ## 🖼️ Output Screenshots
 
 ### Dashboard Overview
-![alt text](image.png)
+![Dashboard Overview](images/dashboard.png)
 
 ### Filtered & Ranked Leads
-![alt text](image-1.png)
+![Filtered & Ranked Leads](images/filtered_leads.png)
 
 ### CSV Export
-![alt text](image-2.png)
+![CSV Export](images/csv_export.png)
